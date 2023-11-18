@@ -1,1 +1,3 @@
 # QB-RepairVehicleZone
+
+Dependencies : oxlib
