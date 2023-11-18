@@ -1,6 +1,18 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 local canRepair = false
 
+--Keybind to repair
+local repairzonebind = lib.addKeybind({
+    name = 'repairzone',
+    description = 'Press e to repair your vehicle',
+    defaultKey = 'E',
+    onPressed = function()
+        TriggerEvent('nazz:repairzones')
+    end
+})
+repairzonebind:disable(true)
+
+--Function
 local function RepairVehicle(veh)
     local veh = QBCore.Functions.GetClosestVehicle()
     SetVehicleFixed(veh)
@@ -12,47 +24,59 @@ local function RepairVehicle(veh)
     SetVehicleTyreFixed(veh, 4)
 end
 
-CreateThread(function()
-    while true do
-        local ped = PlayerPedId()
-        if canRepair then
-            if IsControlJustPressed(0, 46) and IsPedInAnyVehicle(ped) then
-                RepairVehicle(veh)
-                QBCore.Functions.Notify('Vehicle Repaired!', 'success')
-            end
-        end
-        Wait(0)
-    end
-end)
-
-CreateThread(function()
-    local zones = {}
-    local ped = PlayerPedId()
-
-    for k, v in pairs(Config.RepairZone) do
-        zones[#zones+1] = PolyZone:Create(v.points, {
-            name = v.name,
-            minZ = v.minZ,
-            maxZ = v.maxZ,
-            debugGrid = false,
-        })
-    end
-
-    local Repair = ComboZone:Create(zones, {
-        name = "Repair", 
-        debugPoly = false
+function onEnter(self)
+    repairzonebind:disable(false)
+end
+     
+function onExit(self)
+    canRepair = false
+    repairzonebind:disable(true)
+    lib.hideTextUI()
+end
+     
+function inside(self)
+    canRepair = true
+    lib.showTextUI('[E] Repair Vehicle', {
+        icon = 'fa-solid fa-screwdriver-wrench',
+        position = "left-center"
     })
+end
+     
+for k, v in pairs(Config.RepairZone) do
+    local poly = lib.zones.poly({
+    points = v.points,
+    thickness = v.thickness,
+    debug = true,
+    inside = inside,
+    onEnter = onEnter,
+    onExit = onExit
+    })
+end
 
-    Repair:onPlayerInOut(function(isPointInside, point, zone)
-        if isPointInside then
-            lib.showTextUI('[E] Repair Vehicle', {
-                icon = 'fa-solid fa-screwdriver-wrench',
-                position = "left-center"
-            })
-            canRepair = true
+--Event
+RegisterNetEvent('nazz:repairzones', function()
+    local ped = PlayerPedId()
+    if canRepair then
+        if IsPedInAnyVehicle(ped) then
+            if repairing then return end
+            repairing = true
+            if lib.progressCircle({
+                duration = 5000,
+                position = 'bottom',
+                useWhileDead = false,
+                canCancel = true,
+                disable = {
+                    car = true
+                },
+            }) then
+	            RepairVehicle(veh)
+                QBCore.Functions.Notify('Vehicle Repaired!', 'success')
+                repairing = false
+            end
         else
-            lib.hideTextUI()
-            canRepair = false
+            QBCore.Functions.Notify('Youre not inside vehicle!', 'error')
         end
-    end)
+    else
+        QBCore.Functions.Notify('Youre outside repair zone!!', 'error')
+    end
 end)
