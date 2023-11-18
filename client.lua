@@ -1,4 +1,3 @@
-local QBCore = exports['qb-core']:GetCoreObject()
 local canRepair = false
 
 --Keybind to repair
@@ -13,8 +12,31 @@ local repairzonebind = lib.addKeybind({
 repairzonebind:disable(true)
 
 --Function
+
+function getClosestVehicle(coords)
+    local ped = cache.ped
+    local vehicles = GetGamePool('CVehicle')
+    local closestDistance = -1
+    local closestVehicle = -1
+    if coords then
+        coords = type(coords) == 'table' and vec3(coords.x, coords.y, coords.z) or coords
+    else
+        coords = GetEntityCoords(ped)
+    end
+    for i = 1, #vehicles, 1 do
+        local vehicleCoords = GetEntityCoords(vehicles[i])
+        local distance = #(vehicleCoords - coords)
+
+        if closestDistance == -1 or closestDistance > distance then
+            closestVehicle = vehicles[i]
+            closestDistance = distance
+        end
+    end
+    return closestVehicle, closestDistance
+end
+
 local function RepairVehicle(veh)
-    local veh = QBCore.Functions.GetClosestVehicle()
+    local veh = getClosestVehicle()
     SetVehicleFixed(veh)
     SetVehicleEngineOn(veh, true, false)
     SetVehicleTyreFixed(veh, 0)
@@ -55,7 +77,7 @@ end
 
 --Event
 RegisterNetEvent('nazz:repairzones', function()
-    local ped = PlayerPedId()
+    local ped = cache.ped
     if canRepair then
         if IsPedInAnyVehicle(ped) then
             if repairing then return end
@@ -70,13 +92,25 @@ RegisterNetEvent('nazz:repairzones', function()
                 },
             }) then
 	            RepairVehicle(veh)
-                QBCore.Functions.Notify('Vehicle Repaired!', 'success')
+                lib.notify({
+                    title = 'Vehicle Repaired!',
+                    type = 'success',
+                    position = 'top'
+                })
                 repairing = false
             end
         else
-            QBCore.Functions.Notify('Youre not inside vehicle!', 'error')
+            lib.notify({
+                title = 'Youre not inside vehicle!',
+                type = 'error',
+                position = 'top'
+            })
         end
     else
-        QBCore.Functions.Notify('Youre outside repair zone!!', 'error')
+        lib.notify({
+            title = 'Youre outside repair zone!',
+            type = 'error',
+            position = 'top'
+        })
     end
 end)
