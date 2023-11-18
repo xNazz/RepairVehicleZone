@@ -4,10 +4,11 @@ author 'Nazz'
 lua54 'yes'
 
 client_scripts {
-    '@PolyZone/client.lua',
-    '@PolyZone/BoxZone.lua',
-    '@PolyZone/ComboZone.lua',
     'client.lua',
+}
+
+server_scripts {
+    'server.lua'
 }
 
 shared_scripts {
@@ -16,5 +17,5 @@ shared_scripts {
 }
 
 dependencies {
-    'PolyZone',
+    'ox_lib',
 }
