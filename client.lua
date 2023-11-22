@@ -86,7 +86,7 @@ RegisterNetEvent('nazz:repairzones', function()
                 duration = 5000,
                 position = 'bottom',
                 useWhileDead = false,
-                canCancel = true,
+                canCancel = false,
                 disable = {
                     car = true
                 },
@@ -97,8 +97,8 @@ RegisterNetEvent('nazz:repairzones', function()
                     type = 'success',
                     position = 'top'
                 })
-                repairing = false
             end
+            repairing = false
         else
             lib.notify({
                 title = 'Youre not inside vehicle!',
